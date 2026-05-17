@@ -1,0 +1,37 @@
+{
+  "name": "cluade-agent-constructor-copilot",
+  "displayName": "Claude Agent Constructor Copilot",
+  "version": "0.0.1",
+  "description": "VS Code extension with a Scratch-like canvas for composing agents, skills, and scripts into markdown files.",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:agentConstructor.openCanvas"
+  ],
+  "main": "./out/extension.js",
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "test": "npm run compile && node --test out/test/*.test.js"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "agentConstructor.openCanvas",
+        "title": "Open Agent Constructor Canvas"
+      }
+    ]
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "@types/vscode": "^1.120.0",
+    "typescript": "^6.0.3"
+  }
+}

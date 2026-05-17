@@ -1,5 +1,5 @@
 {
-  "name": "cluade-agent-constructor-copilot",
+  "name": "claude-agent-constructor-copilot",
   "displayName": "Claude Agent Constructor Copilot",
   "version": "0.0.1",
   "description": "VS Code extension with a Scratch-like canvas for composing agents, skills, and scripts into markdown files.",

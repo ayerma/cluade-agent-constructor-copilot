@@ -276,7 +276,8 @@ function parseMarkdown(raw: string): {
 }
 
 function createBlockId(sourceFile: string): string {
-  return `block-${sourceFile.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+  const encoded = Buffer.from(sourceFile, 'utf8').toString('base64url');
+  return `block-${encoded}`;
 }
 
 function toWorkspaceUri(workspaceFolder: vscode.WorkspaceFolder, relativePath: string): vscode.Uri | undefined {

@@ -124,11 +124,13 @@ export function getWebviewHtml(nonce: string, initialBlocks: ConstructorBlock[] 
       });
     }
 
+    let fallbackCounter = 0;
     function createId(prefix) {
       if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
         return prefix + '-' + crypto.randomUUID();
       }
-      return prefix + '-' + Date.now().toString(36) + '-' + Math.random().toString(16).slice(2, 8);
+      fallbackCounter += 1;
+      return prefix + '-' + Date.now().toString(36) + '-' + fallbackCounter.toString(36);
     }
     function slugify(value) {
       return String(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-') || 'block';
@@ -340,7 +342,17 @@ export function getWebviewHtml(nonce: string, initialBlocks: ConstructorBlock[] 
         return;
       }
       const title = (block.title || defaultTitles[block.type]) + ' Copy';
-      const clone = { ...block, id: createId(block.type), title: title, sourceFile: copyPath(block.sourceFile, title), overuseOf: '', uses: [] };
+      const clone = {
+        id: createId(block.type),
+        type: block.type,
+        title: title,
+        content: block.content,
+        layer: block.layer,
+        color: block.color,
+        sourceFile: copyPath(block.sourceFile, title),
+        overuseOf: '',
+        uses: [],
+      };
       state.blocks.push(clone);
       selectBlock(clone.id);
       syncStatus('Block copied to a new file.');
@@ -351,7 +363,17 @@ export function getWebviewHtml(nonce: string, initialBlocks: ConstructorBlock[] 
       if (!block) {
         return;
       }
-      const reference = { ...block, id: createId(block.type), overuseOf: block.id, uses: [] };
+      const reference = {
+        id: createId(block.type),
+        type: block.type,
+        title: block.title,
+        content: block.content,
+        layer: block.layer,
+        color: block.color,
+        sourceFile: block.sourceFile,
+        overuseOf: block.id,
+        uses: [],
+      };
       block.uses = Array.from(new Set([...(block.uses || []), reference.id]));
       state.blocks.push(reference);
       selectBlock(reference.id);

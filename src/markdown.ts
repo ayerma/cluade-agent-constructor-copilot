@@ -5,6 +5,11 @@ export interface ConstructorBlock {
   type: BlockType;
   title: string;
   content: string;
+  layer?: string;
+  color?: string;
+  sourceFile?: string;
+  overuseOf?: string;
+  uses?: string[];
 }
 
 export interface MarkdownFile {
@@ -12,7 +17,7 @@ export interface MarkdownFile {
   content: string;
 }
 
-const DEFAULT_TITLES: Record<BlockType, string> = {
+export const DEFAULT_TITLES: Record<BlockType, string> = {
   agent: 'New Agent',
   skill: 'New Skill',
   script: 'New Script',
@@ -32,24 +37,55 @@ export function slugifyFileName(value: string): string {
   return slug || 'block';
 }
 
-export function generateMarkdownFiles(blocks: ConstructorBlock[]): MarkdownFile[] {
-  return blocks.map((block, index) => {
-    const title = sanitizeTitle(block);
-    const order = String(index + 1).padStart(3, '0');
-    const fileName = `${order}-${block.type}-${slugifyFileName(title)}.md`;
-    const content = [
-      '---',
-      `type: ${block.type}`,
-      `title: ${title}`,
-      `order: ${index + 1}`,
-      '---',
-      '',
-      `# ${title}`,
-      '',
-      block.content.trim() || '_Add details here._',
-      '',
-    ].join('\n');
+export function createMarkdownContent(block: ConstructorBlock, index: number): string {
+  const title = sanitizeTitle(block);
+  const frontmatter: string[] = [
+    '---',
+    `type: ${block.type}`,
+    `title: ${title}`,
+    `order: ${index + 1}`,
+  ];
 
-    return { fileName, content };
-  });
+  if (block.layer?.trim()) {
+    frontmatter.push(`layer: ${block.layer.trim()}`);
+  }
+
+  if (block.color?.trim()) {
+    frontmatter.push(`color: ${block.color.trim()}`);
+  }
+
+  if (block.sourceFile?.trim()) {
+    frontmatter.push(`source_file: ${block.sourceFile.trim()}`);
+  }
+
+  if (block.overuseOf?.trim()) {
+    frontmatter.push(`overuse_of: ${block.overuseOf.trim()}`);
+  }
+
+  if (block.uses?.length) {
+    frontmatter.push(`uses: ${block.uses.join(',')}`);
+  }
+
+  return [
+    ...frontmatter,
+    '---',
+    '',
+    `# ${title}`,
+    '',
+    block.content.trim() || '_Add details here._',
+    '',
+  ].join('\n');
+}
+
+export function inferMarkdownFileName(block: ConstructorBlock, index: number): string {
+  const title = sanitizeTitle(block);
+  const order = String(index + 1).padStart(3, '0');
+  return `${order}-${block.type}-${slugifyFileName(title)}.md`;
+}
+
+export function generateMarkdownFiles(blocks: ConstructorBlock[]): MarkdownFile[] {
+  return blocks.map((block, index) => ({
+    fileName: inferMarkdownFileName(block, index),
+    content: createMarkdownContent(block, index),
+  }));
 }

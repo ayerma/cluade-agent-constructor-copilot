@@ -75,7 +75,7 @@ export function deactivate(): void {}
 async function loadWorkspaceBlocks(workspaceFolder: vscode.WorkspaceFolder): Promise<ConstructorBlock[]> {
   const uris = await vscode.workspace.findFiles(
     '**/*.md',
-    '**/{node_modules,.git,out,agent-constructor-output}/**',
+    '**/{node_modules,.git,out}/**',
     400,
   );
 
@@ -101,7 +101,7 @@ async function loadWorkspaceBlocks(workspaceFolder: vscode.WorkspaceFolder): Pro
       order,
       sourceFile,
       block: {
-        id: createBlockId(sourceFile),
+        id: parsed.frontmatter.id?.trim() || createBlockId(sourceFile),
         type: inferredType,
         title,
         content: parsed.body.trim(),
@@ -287,7 +287,8 @@ function toWorkspaceUri(workspaceFolder: vscode.WorkspaceFolder, relativePath: s
 
   const workspaceRoot = path.resolve(workspaceFolder.uri.fsPath);
   const resolvedPath = path.resolve(workspaceRoot, normalized);
-  if (resolvedPath !== workspaceRoot && !resolvedPath.startsWith(`${workspaceRoot}${path.sep}`)) {
+  const relative = path.relative(workspaceRoot, resolvedPath);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
     return undefined;
   }
 

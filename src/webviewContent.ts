@@ -124,10 +124,11 @@ export function getWebviewHtml(nonce: string, initialBlocks: ConstructorBlock[] 
       });
     }
 
-    let idCounter = 0;
     function createId(prefix) {
-      idCounter += 1;
-      return prefix + '-' + Date.now().toString(36) + '-' + idCounter.toString(36);
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return prefix + '-' + crypto.randomUUID();
+      }
+      return prefix + '-' + Date.now().toString(36) + '-' + Math.random().toString(16).slice(2, 8);
     }
     function slugify(value) {
       return String(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-') || 'block';
@@ -359,7 +360,7 @@ export function getWebviewHtml(nonce: string, initialBlocks: ConstructorBlock[] 
 
     function openFile(block) {
       if (!block || !block.sourceFile) {
-        status.textContent = 'This block has no file path yet. Apply to filesystem first.';
+        status.textContent = 'This block has not been saved to a file yet. Click "Apply to Filesystem" first.';
         return;
       }
       vscode.postMessage({ type: 'open-file', filePath: block.sourceFile });

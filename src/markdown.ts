@@ -41,6 +41,7 @@ export function createMarkdownContent(block: ConstructorBlock, index: number): s
   const title = sanitizeTitle(block);
   const frontmatter: string[] = [
     '---',
+    `id: ${block.id}`,
     `type: ${block.type}`,
     `title: ${title}`,
     `order: ${index + 1}`,

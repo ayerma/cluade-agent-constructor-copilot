@@ -17,7 +17,7 @@ test('generateMarkdownFiles creates ordered markdown output per block', () => {
     files.map((file) => file.fileName),
     ['001-agent-planner.md', '002-skill-new-skill.md'],
   );
-  assert.match(files[0].content, /^---\ntype: agent\ntitle: Planner\norder: 1\n---/);
+  assert.match(files[0].content, /^---\nid: 1\ntype: agent\ntitle: Planner\norder: 1\n---/);
   assert.match(files[1].content, /# New Skill/);
   assert.match(files[1].content, /_Add details here\._/);
 });

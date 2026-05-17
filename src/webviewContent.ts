@@ -124,7 +124,11 @@ export function getWebviewHtml(nonce: string, initialBlocks: ConstructorBlock[] 
       });
     }
 
-    function createId(prefix) { return prefix + '-' + Math.random().toString(16).slice(2, 8); }
+    let idCounter = 0;
+    function createId(prefix) {
+      idCounter += 1;
+      return prefix + '-' + Date.now().toString(36) + '-' + idCounter.toString(36);
+    }
     function slugify(value) {
       return String(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-') || 'block';
     }

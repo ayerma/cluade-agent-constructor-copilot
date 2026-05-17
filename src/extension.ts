@@ -101,7 +101,7 @@ async function loadWorkspaceBlocks(workspaceFolder: vscode.WorkspaceFolder): Pro
       order,
       sourceFile,
       block: {
-        id: `block-${entries.length + 1}-${Math.random().toString(16).slice(2, 6)}`,
+        id: createBlockId(sourceFile),
         type: inferredType,
         title,
         content: parsed.body.trim(),
@@ -116,9 +116,8 @@ async function loadWorkspaceBlocks(workspaceFolder: vscode.WorkspaceFolder): Pro
 
   return entries
     .sort((a, b) => (a.order - b.order) || a.sourceFile.localeCompare(b.sourceFile))
-    .map((entry, index) => ({
+    .map((entry) => ({
       ...entry.block,
-      id: `block-${index + 1}-${Math.random().toString(16).slice(2, 6)}`,
       title: entry.block.title || DEFAULT_TITLES[entry.block.type],
     }));
 }
@@ -139,10 +138,14 @@ async function syncBlocksToWorkspace(
       return;
     }
 
+    const uri = toWorkspaceUri(workspaceFolder, relativePath);
+    if (!uri) {
+      return;
+    }
+
     touchedPaths.add(relativePath);
 
-    const uri = vscode.Uri.joinPath(workspaceFolder.uri, ...relativePath.split('/'));
-    const directory = vscode.Uri.joinPath(workspaceFolder.uri, ...relativePath.split('/').slice(0, -1));
+    const directory = vscode.Uri.file(path.dirname(uri.fsPath));
     const content = createMarkdownContent({
       ...block,
       title: block.title || DEFAULT_TITLES[block.type],
@@ -178,12 +181,17 @@ async function openWorkspaceFile(relativePath: string): Promise<void> {
   }
 
   const cleanPath = normalizeRelativePath(relativePath);
-  if (!cleanPath || cleanPath.startsWith('..')) {
+  if (!cleanPath) {
     vscode.window.showErrorMessage('Cannot open files outside of the current workspace.');
     return;
   }
 
-  const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, ...cleanPath.split('/'));
+  const fileUri = toWorkspaceUri(workspaceFolder, cleanPath);
+  if (!fileUri) {
+    vscode.window.showErrorMessage('Cannot open files outside of the current workspace.');
+    return;
+  }
+
   try {
     const document = await vscode.workspace.openTextDocument(fileUri);
     await vscode.window.showTextDocument(document);
@@ -193,7 +201,19 @@ async function openWorkspaceFile(relativePath: string): Promise<void> {
 }
 
 function normalizeRelativePath(value: string): string {
-  return value.replace(/\\/g, '/').replace(/^\/+/, '').trim();
+  const normalized = path.posix
+    .normalize(value.replace(/\\/g, '/').trim())
+    .replace(/^\/+/, '');
+
+  if (!normalized || normalized === '.' || normalized === '..') {
+    return '';
+  }
+
+  if (normalized.startsWith('../') || normalized.includes('/../')) {
+    return '';
+  }
+
+  return normalized;
 }
 
 function inferBlockType(filePath: string, explicitType?: string): BlockType {
@@ -253,6 +273,25 @@ function parseMarkdown(raw: string): {
     body,
     heading: headingMatch?.[1]?.trim() ?? '',
   };
+}
+
+function createBlockId(sourceFile: string): string {
+  return `block-${sourceFile.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+}
+
+function toWorkspaceUri(workspaceFolder: vscode.WorkspaceFolder, relativePath: string): vscode.Uri | undefined {
+  const normalized = normalizeRelativePath(relativePath);
+  if (!normalized) {
+    return undefined;
+  }
+
+  const workspaceRoot = path.resolve(workspaceFolder.uri.fsPath);
+  const resolvedPath = path.resolve(workspaceRoot, normalized);
+  if (resolvedPath !== workspaceRoot && !resolvedPath.startsWith(`${workspaceRoot}${path.sep}`)) {
+    return undefined;
+  }
+
+  return vscode.Uri.file(resolvedPath);
 }
 
 function getNonce(): string {
